@@ -249,6 +249,7 @@ struct WebContentAddressBarView: View {
                     HStack(spacing: 2) {
                         readerButton
                         copyURLButton
+                        shareButton
                         menuButton
                     }
                 }
@@ -409,6 +410,24 @@ struct WebContentAddressBarView: View {
         }
     }
 
+    @ViewBuilder
+    private var shareButton: some View {
+        ShareButtonView(
+            currentTab: currentTab,
+            isAddressBarHovering: isHovering,
+            isMenuShown: isMenuShown,
+            dismissTooltip: {
+                anchorView?.window?.customTooltipController.dismissAll()
+            }
+        )
+        .customTooltip {
+            CommandShortcutTooltipContent(
+                title: NSLocalizedString("browser.webContentAddressBar.sharePageTooltip", value: "Share Page", comment: "Share Page shortcut tooltip title in the address bar"),
+                command: .PHI_SHARE_PAGE
+            )
+        }
+    }
+
     private var menuButton: some View {
         let config = LottieAnimationViewConfig(
             animationName: "extension-button",
@@ -537,6 +556,58 @@ private struct CopyURLButtonView: View {
         }
         .buttonStyle(.plain)
         .frame(width: 24, height: 24)
+        .onHover { hovering in
+            isButtonHovering = hovering
+        }
+        .opacity((isAddressBarHovering || isMenuShown) ? 1 : 0)
+        .animation(.easeInOut(duration: 0.15), value: isAddressBarHovering || isMenuShown)
+        .animation(.easeInOut(duration: 0.15), value: isButtonHovering)
+    }
+}
+
+/// Address-bar affordance for the system share picker.
+///
+/// Hover-gated like `CopyURLButtonView`; keeps its own anchor so the picker
+/// pops up from the button rather than the address bar edge.
+private struct ShareButtonView: View {
+    let currentTab: Tab?
+    let isAddressBarHovering: Bool
+    let isMenuShown: Bool
+    let dismissTooltip: () -> Void
+
+    @State private var isButtonHovering = false
+    @State private var shareAnchorView: NSView?
+    @Environment(\.phiTheme) private var theme
+    @Environment(\.phiAppearance) private var appearance
+
+    var body: some View {
+        Button {
+            dismissTooltip()
+            guard let url = PageSharingPresenter.shareableURL(for: currentTab),
+                  let shareAnchorView else { return }
+            PageSharingPresenter.share(url: url, anchorView: shareAnchorView)
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(Color(.sidebarTabHovered))
+                    .frame(width: 24, height: 24)
+                    .opacity(isButtonHovering ? 1 : 0)
+
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(
+                        ThemedColor.textPrimary.swiftUIColor(theme: theme,
+                                                             appearance: appearance))
+            }
+        }
+        .buttonStyle(.plain)
+        .frame(width: 24, height: 24)
+        .background(
+            AddressBarAnchorView { view in
+                shareAnchorView = view
+            }
+            .allowsHitTesting(false)
+        )
         .onHover { hovering in
             isButtonHovering = hovering
         }

@@ -29,6 +29,7 @@ struct CommandDispatcher {
         .PHI_COPY_URL,
         .PHI_TOGGLE_READER,
         .PHI_NEW_KIOSK_WINDOW,
+        .PHI_SHARE_PAGE,
     ] + CommandWrapper.spaceSelectionCommands
 
     /// Commands swallowed while the focused tab shows the native NTP — it has no
@@ -204,6 +205,12 @@ struct CommandDispatcher {
             let copiedURLCount = state.selectedTabCountForURLCopy
             guard state.copySelectedTabURLs() else { return false }
             OverlayToastCenter.shared.showURLCopyConfirmation(copiedURLCount: copiedURLCount, in: state)
+            return true
+        case .PHI_SHARE_PAGE:
+            guard PageSharingPresenter.canShare(tab: windowController.browserState.focusingTab) else {
+                return false
+            }
+            windowController.sharePage(nil)
             return true
         case .PHI_TOGGLE_READER:
             let state = windowController.browserState

@@ -83,6 +83,7 @@ extension Shortcuts {
                         .IDC_FOCUS_LOCATION,
                         .IDC_CLOSE_WINDOW,
                         .IDC_CLOSE_TAB,
+                        .PHI_SHARE_PAGE,
                         .IDC_PRINT]
             case .edit:
                 return [.PHI_COPY_URL,
@@ -381,6 +382,7 @@ extension CommandWrapper {
         .PHI_COPY_URL: .init(title: "Copy URL", keywords: ["copy url", "copy link", "url"]),
         .PHI_TOGGLE_READER: .init(title: "Toggle Reader View", keywords: ["reader", "reader view", "reading", "article", "distraction free"]),
         .PHI_NEW_KIOSK_WINDOW: .init(title: "New Kiosk Window", keywords: ["new kiosk window", "kiosk", "window"]),
+        .PHI_SHARE_PAGE: .init(title: "Share Page", keywords: ["share", "share page", "share link", "airdrop", "send"]),
         .PHI_SELECT_NEXT_SPACE: .init(title: "Next Space", keywords: ["space", "next space", "forward"]),
         .PHI_SELECT_PREVIOUS_SPACE: .init(title: "Previous Space", keywords: ["space", "previous space", "backward"]),
         .PHI_SELECT_SPACE_0: .init(title: "Go to Space 1", keywords: ["space", "space1"]),

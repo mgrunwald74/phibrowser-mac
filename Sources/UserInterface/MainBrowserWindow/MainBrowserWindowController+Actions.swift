@@ -53,6 +53,19 @@ extension MainBrowserWindowController {
         return false
     }
     
+    @IBAction func sharePage(_ sender: Any?) {
+        guard let url = PageSharingPresenter.shareableURL(for: browserState.focusingTab) else {
+            return
+        }
+        // Anchor at the address bar so the picker pops up where the share
+        // button lives; the content view covers layouts without one.
+        guard let anchorView = mainSplitViewController.webContentContainerViewController
+            .addressBarAnchorView ?? window?.contentView else {
+            return
+        }
+        PageSharingPresenter.share(url: url, anchorView: anchorView)
+    }
+
     @IBAction func openLocationBar(_ sender: Any?) {
         var addressView = sender as? NSView
         if addressView == nil,
