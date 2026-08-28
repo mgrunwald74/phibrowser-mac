@@ -6,6 +6,7 @@
 import Cocoa
 import SwiftUI
 import SwiftData
+import Combine
 
 extension MainBrowserWindowController {
     @IBAction func newBrowserTab(_ sender: Any?) {
@@ -30,9 +31,35 @@ extension MainBrowserWindowController {
                 browserState.enqueueNativeNTP()
             }
             browserState.createQuickLookupTab()
+            // The incognito native NTP focuses its own omnibox in
+            // `focusWebContent`; only the Chromium-rendered NTP needs the
+            // overlay.
+            if !browserState.isIncognito {
+                openOmniboxOnceCreatedNTPFocuses()
+            }
         } else {
             toggleOmniBox(fromAddressBar: false)
         }
+    }
+
+    /// Chromium keeps keyboard focus in the location bar on a fresh new-tab
+    /// page; Phi's location bar is the omnibox overlay. Waits (one-shot, with
+    /// timeout) for the tab created by `createQuickLookupTab` to become the
+    /// focused tab, then opens the overlay over it so typing right after ⌘T
+    /// works — the page's own search box renders inside the Chromium
+    /// framework and cannot be focused from the Mac client.
+    private func openOmniboxOnceCreatedNTPFocuses() {
+        let previousTabId = browserState.focusingTab?.guid
+        browserState.$focusingTab
+            .compactMap { $0 }
+            .filter { $0.isNTP && $0.guid != previousTabId }
+            .prefix(1)
+            .timeout(.seconds(2), scheduler: DispatchQueue.main)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.openLocationBar(nil)
+            }
+            .store(in: &cancellables)
     }
     
     func handleCloseTab() -> Bool {
